@@ -88,7 +88,7 @@ class WeatherViewController: UIViewController {
     
     func setUpdateDateTimer(_ ms: Double) {
         Timer.scheduledTimer(withTimeInterval: ms, repeats: true) { [weak self] _ in
-            self?.fetchData()
+            self?.fullResfresh()
         }
     }
     
@@ -96,99 +96,52 @@ class WeatherViewController: UIViewController {
         geoManager.requestWhenInUseAuthorization()
     }
     
-    func getWeatherWithDarkSky(location: CLLocation) {
-        isGettingWeather = true
-        let urlString = "https://api.darksky.net/forecast/\(darkSkyAPI)/\(location.coordinate.latitude),\(location.coordinate.longitude)"
-        let url = URL(string: urlString)
-        let sessionTask = URLSession.shared.dataTask(with: url!) { [weak self] (data, response, error) in
-            if let error = error {
-                print("Couldn't get weather. \(error)")
-            } else {
-                guard let jsonObject = try? JSONSerialization.jsonObject(with: data!, options: .allowFragments) as? Dictionary<String, Any> else { return }
-                guard let hourlyData = (jsonObject!["hourly"] as? Dictionary<String, Any>)!["data"] as? [Dictionary<String, Any>] else { return }
-                
-                let todayHourlyData = hourlyData.filter({ (dict) -> Bool in
-                    let time = Date.init(timeIntervalSince1970: dict["time"] as! Double)
-                    return Calendar.current.compare(time, to: Date(), toGranularity: Calendar.Component.day) == .orderedSame
-                })
-                let tomorrowHourlyData = hourlyData.filter({ (dict) -> Bool in
-                    let calendar = Calendar.current
-                    var dayComponent = DateComponents()
-                    dayComponent.day = 1
-                    let tomorrowDate = calendar.date(byAdding: dayComponent, to: Date())
-                    let time = Date.init(timeIntervalSince1970: dict["time"] as! Double)
-                    return Calendar.current.compare(time, to: tomorrowDate!, toGranularity: Calendar.Component.day) == .orderedSame
-                })
-                let totalWeatherData = [todayHourlyData, tomorrowHourlyData]
-                var totalWeatherDataForTable = [[(Date, WeatherInfo)]]()
-                for weatherDataForSingleDay in totalWeatherData {
-                    var weatherPerHourForSingleDay = [(Date, WeatherInfo)]()
-                    for hourData in weatherDataForSingleDay {
-                        guard let timeUnix = hourData["time"] as? Double else { return }
-                        guard let temperatureF = hourData["temperature"] as? Double else { return }
-                        let temperatureC = (5/9) * (temperatureF - 32)
-                        let time = Date.init(timeIntervalSince1970: timeUnix)
-                        weatherPerHourForSingleDay.append((time, WeatherInfo.init(temperature: temperatureC)))
-                    }
-                    weatherPerHourForSingleDay.sort(by: { (tuple1, tuple2) -> Bool in tuple1.0 < tuple2.0 })
-                    totalWeatherDataForTable.append(weatherPerHourForSingleDay)
-                }
-                self?.weatherPerDay = totalWeatherDataForTable
-                self?.isGettingWeather = false
-            }
-        }
-        sessionTask.resume()
-    }
-    
-    func getCity(location: CLLocation, completion: @escaping (_ city: String, _ country: String) -> Void) {
-        isGettingCity = true
-        var countryCode: String?
-        var cityName: String?
-        let googleMapsUrl = URL(string: "https://maps.googleapis.com/maps/api/geocode/json?latlng=\(location.coordinate.latitude),\(location.coordinate.longitude)&key=\(googleAPIKey)")!
-        let task = URLSession.shared.dataTask(with: googleMapsUrl) { [weak self] (data, response, error) in
-            if let error = error {
-                print("Couldn't get city. \(error)")
-            } else {
-                if let jsonObj = try? JSONSerialization.jsonObject(with: data!, options: .allowFragments) as? Dictionary<String, Any> {
-                    if let results = jsonObj?["results"] as? [Dictionary<String, Any>] {
-                        if let addressComponents = results[0]["address_components"] as? [Dictionary<String, Any>] {
-                            for component in addressComponents {
-                                if let types = component["types"] as? [String] {
-                                    if types.contains("country") {
-                                        countryCode = component["short_name"] as? String
-                                    }
-                                    if types.contains("locality") {
-                                        cityName = component["short_name"] as? String
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            if let countryCode = countryCode, let cityName = cityName {
-                completion(cityName, countryCode)
-            }
-            self?.isGettingCity = false
-        }
-        task.resume()
-    }
-    
     func fullResfresh() {
         geoManager.requestLocation()
     }
     
-    func fetchData() {
-        if let location = geoManager.location {
-            getWeatherWithDarkSky(location: location)
-            getCity(location: location) { [weak self] (city, country) in
-                self?.cityName = city
+    func fetchData(with location: CLLocation) {
+        self.isGettingWeather = true
+        ApiManager.getWeatherWithDarkSky(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude, completion: { [weak self] (weatherData) in
+            let todayHourlyData = weatherData.filter({ (dict) -> Bool in
+                let time = Date.init(timeIntervalSince1970: dict["time"] as! Double)
+                return Calendar.current.compare(time, to: Date(), toGranularity: Calendar.Component.day) == .orderedSame
+            })
+            let tomorrowHourlyData = weatherData.filter({ (dict) -> Bool in
+                let calendar = Calendar.current
+                var dayComponent = DateComponents()
+                dayComponent.day = 1
+                let tomorrowDate = calendar.date(byAdding: dayComponent, to: Date())
+                let time = Date.init(timeIntervalSince1970: dict["time"] as! Double)
+                return Calendar.current.compare(time, to: tomorrowDate!, toGranularity: Calendar.Component.day) == .orderedSame
+            })
+            let totalWeatherData = [todayHourlyData, tomorrowHourlyData]
+            var totalWeatherDataForTable = [[(Date, WeatherInfo)]]()
+            for weatherDataForSingleDay in totalWeatherData {
+                var weatherPerHourForSingleDay = [(Date, WeatherInfo)]()
+                for hourData in weatherDataForSingleDay {
+                    guard let timeUnix = hourData["time"] as? Double else { return }
+                    guard let temperatureF = hourData["temperature"] as? Double else { return }
+                    let temperatureC = (5/9) * (temperatureF - 32)
+                    let time = Date.init(timeIntervalSince1970: timeUnix)
+                    weatherPerHourForSingleDay.append((time, WeatherInfo.init(temperature: temperatureC)))
+                }
+                weatherPerHourForSingleDay.sort(by: { (tuple1, tuple2) -> Bool in tuple1.0 < tuple2.0 })
+                totalWeatherDataForTable.append(weatherPerHourForSingleDay)
             }
+            self?.weatherPerDay = totalWeatherDataForTable
+            self?.isGettingWeather = false
+        })
+        
+        isGettingCity = true
+        ApiManager.getCity(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude) { [weak self] (city, country) in
+            self?.cityName = city
+            self?.isGettingCity = false
         }
     }
     
     @objc func refreshWeatherData(_ sender: Any) {
-        fetchData()
+        fullResfresh()
         tableView.refreshControl?.endRefreshing()
     }
     
@@ -198,7 +151,7 @@ class WeatherViewController: UIViewController {
         }
     }
     func stopSpinner(_ spinner: UIActivityIndicatorView) {
-        if !(isGettingCity && isGettingWeather) {
+        if !(isGettingCity || isGettingWeather) {
             DispatchQueue.main.async {
                 spinner.stopAnimating()
             }
@@ -241,7 +194,7 @@ extension WeatherViewController: UITableViewDelegate {
 
 extension WeatherViewController: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        fetchData()
+        fetchData(with: locations.last!)
     }
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print(error)

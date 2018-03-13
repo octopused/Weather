@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C6031B8D20578E3D00F1FEBF /* ApiManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6031B8C20578E3D00F1FEBF /* ApiManager.swift */; };
 		C621A0CC2052624D00ED7396 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C621A0CB2052624D00ED7396 /* AppDelegate.swift */; };
 		C621A0CE2052624D00ED7396 /* WeatherViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C621A0CD2052624D00ED7396 /* WeatherViewController.swift */; };
 		C621A0D12052624D00ED7396 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C621A0CF2052624D00ED7396 /* Main.storyboard */; };
@@ -17,6 +18,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		C6031B8C20578E3D00F1FEBF /* ApiManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiManager.swift; sourceTree = "<group>"; };
 		C621A0C82052624D00ED7396 /* Weather.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Weather.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C621A0CB2052624D00ED7396 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		C621A0CD2052624D00ED7396 /* WeatherViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherViewController.swift; sourceTree = "<group>"; };
@@ -62,6 +64,7 @@
 				C621A0CD2052624D00ED7396 /* WeatherViewController.swift */,
 				C621A0DD2052643A00ED7396 /* WeatherInfo.swift */,
 				C621A0DF20526CB800ED7396 /* WeatherTableCell.swift */,
+				C6031B8C20578E3D00F1FEBF /* ApiManager.swift */,
 				C621A0CF2052624D00ED7396 /* Main.storyboard */,
 				C621A0D22052624D00ED7396 /* Assets.xcassets */,
 				C621A0D42052624D00ED7396 /* LaunchScreen.storyboard */,
@@ -143,6 +146,7 @@
 			files = (
 				C621A0CE2052624D00ED7396 /* WeatherViewController.swift in Sources */,
 				C621A0E020526CB800ED7396 /* WeatherTableCell.swift in Sources */,
+				C6031B8D20578E3D00F1FEBF /* ApiManager.swift in Sources */,
 				C621A0CC2052624D00ED7396 /* AppDelegate.swift in Sources */,
 				C621A0DE2052643A00ED7396 /* WeatherInfo.swift in Sources */,
 			);
